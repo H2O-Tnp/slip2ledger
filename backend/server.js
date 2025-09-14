@@ -12,14 +12,20 @@ dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "20mb" }));
 
 const MONGO_URL = process.env.MONGO_URL;
 if (!MONGO_URL) {
   console.error("Missing MONGO_URL in .env");
   process.exit(1);
 }
-mongoose.connect(MONGO_URL).then(() => console.log("MongoDB connected")).catch(err => { console.error(err); process.exit(1); });
+mongoose
+  .connect(MONGO_URL)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 
 app.use("/entries", entriesRouter);
 app.use("/ai", aiRouter);
