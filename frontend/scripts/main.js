@@ -1,4 +1,11 @@
-const state = { items: [], type: "expense", file: null, previewUrl: "" };
+const state = {
+  items: [],
+  type: "expense",
+  file: null,
+  previewUrl: "",
+  chartData: [],
+};
+
 const fileEl = document.getElementById("file");
 const previewEl = document.getElementById("preview");
 const dropEl = document.getElementById("drop");
@@ -253,13 +260,20 @@ function render() {
   mIncome.textContent = sumIncome.textContent;
   mExpense.textContent = sumExpense.textContent;
   mBalance.textContent = sumBalance.textContent;
+  // Pie data
   const catMap = new Map();
-  for (const it of items.filter((x) => x.type === "expense"))
+  for (const it of items.filter((x) => x.type === "expense")) {
     catMap.set(it.category, (catMap.get(it.category) || 0) + it.amount);
+  }
   const data = Array.from(catMap.entries()).map(([name, value]) => ({
     name,
     value,
   }));
+  state.chartData = data; // <— keep last data for resize redraw
   drawPie(pieCanvas, data);
   chartEmpty.style.display = data.length ? "none" : "";
 }
+
+window.addEventListener('resize', ()=>{
+  if (state.chartData) drawPie(pieCanvas, state.chartData);
+});
