@@ -1,0 +1,1 @@
+const BACKEND_URL = location.origin.replace(/\/+$/, ''); // same origin
