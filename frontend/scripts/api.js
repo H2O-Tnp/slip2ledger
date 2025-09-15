@@ -34,7 +34,7 @@ async function extractSlipAPI(file) {
     rd.onerror = rej;
     rd.readAsDataURL(file);
   });
-  const resp = await fetch(`${BACKEND_URL}/ai/extract`, {
+  const resp = await fetch(`${BACKEND_URL}/ai?debug=1`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -42,6 +42,16 @@ async function extractSlipAPI(file) {
       dataBase64: base64,
     }),
   });
-  if (!resp.ok) throw new Error("AI error");
-  return await resp.json();
+  const text = await resp.text(); // always read response
+  if (!resp.ok) {
+    let err;
+    try {
+      err = JSON.parse(text);
+    } catch {
+      err = { error: text };
+    }
+    const msg = err.detail || err.error || "AI error";
+    throw new Error(msg);
+  }
+  return JSON.parse(text);
 }

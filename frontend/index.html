@@ -1,32 +1,20 @@
 <!doctype html>
-<html lang="th">
+<html lang="en">
 
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="light dark" />
-  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <title>Slip2Ledger — Aurora Sparkle ✨</title>
+  <title>Slip2Ledger — Vanilla JS</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 
 <body>
-  <div class="bg-decor">
-    <div class="blob b1"></div>
-    <div class="blob b2"></div>
-    <div class="blob b3"></div>
-    <div class="sparkles"></div>
-    <div class="starfield"></div>
-    <div class="shooting"></div>
-  </div>
-
-  <header class="topbar hero">
+  <header class="topbar">
     <div class="container">
-      <div class="hero-wrap">
-        <div class="logo logo-big">✨</div>
-        <h1 class="hero-title">Slip2Ledger</h1>
-        <p class="hero-sub">จัดการรายรับรายจ่ายแบบวิบวับระยิบระยับ จนต้องร้องว้าว!</p>
+      <div class="row">
+        <h1>Slip2Ledger</h1>
+        <div class="spacer"></div>
+        <span class="muted">LLM via backend · MongoDB</span>
       </div>
     </div>
   </header>
@@ -34,97 +22,89 @@
   <main class="container">
     <div class="grid">
       <section class="left">
-        <div class="card pop shine">
-          <div class="card-head">
-            <h2>1) อัปโหลดสลิป <span class="sub">ลากรูปลงพื้นที่ได้เลยน้า 🍰</span></h2>
-          </div>
+        <div class="card">
+          <h2>1) Upload slip</h2>
           <div class="content">
             <div id="drop" class="dropzone" tabindex="0">
-              <div class="dz-ico">🖼️</div>
-              <div class="dz-title">ลาก & ปล่อยรูป หรือเลือกไฟล์</div>
-              <div class="dz-sub">รองรับภาพสลิป/ใบเสร็จทั่วไป</div>
+              <div>Drag & drop image here</div>
+              <div class="muted">or</div>
               <input id="file" type="file" accept="image/*" />
               <img id="preview" alt="preview" style="display:none" />
-              <div class="actions" style="margin-top:.75rem">
-                <button id="extractBtn" class="btn-candy shimmer">✨ ดึงข้อมูลด้วย AI</button>
-                <button id="clearBtn" class="outline">ล้างรูป</button>
+              <div class="actions" style="margin-top:.5rem">
+                <button id="extractBtn">Extract with AI</button>
+                <button id="clearBtn" class="outline">Clear</button>
               </div>
-              <div id="error" class="muted error"></div>
+              <div id="error" class="muted" style="color:#b91c1c;margin-top:.5rem"></div>
             </div>
           </div>
         </div>
 
-        <div class="card pop shine">
-          <div class="card-head">
-            <h2>2) ตรวจทาน & บันทึก <span class="sub">เติมรายละเอียดนิดหน่อยก็เรียบร้อย 🧁</span></h2>
-          </div>
-          <div class="content form-grid">
-            <div class="form-block">
-              <label class="lbl">ประเภท</label>
-              <div class="actions" style="justify-content:center">
-                <button id="typeIncome" class="outline pill">🍀 Income</button>
-                <button id="typeExpense" class="pill">💸 Expense</button>
-              </div>
-            </div>
-
-            <div class="form-block">
-              <label for="amount" class="lbl">จำนวนเงิน (THB)</label>
-              <div class="input-wrap">
-                <span class="prefix">฿</span>
-                <input id="amount" type="number" min="0" step="0.01" placeholder="0.00" />
-              </div>
-            </div>
-
-            <div class="form-block">
-              <label for="category" class="lbl">หมวดหมู่</label>
-              <select id="category">
-                <option value="">เลือกหมวดหมู่</option>
-                <option>Shopping</option>
-                <option>Pay Bill</option>
-                <option>Food</option>
-                <option>Transport</option>
-                <option>Groceries</option>
-                <option>Health</option>
-                <option>Entertainment</option>
-                <option>Education</option>
-                <option>Salary</option>
-                <option>Transfer</option>
-                <option>Other</option>
-              </select>
-            </div>
-
-            <div class="form-block">
-              <label for="datetime" class="lbl">วันเวลา</label>
-              <input id="datetime" type="datetime-local" />
-            </div>
-
-            <div class="form-block">
-              <label for="note" class="lbl">โน้ต</label>
-              <textarea id="note" rows="3" placeholder="ร้าน/อ้างอิง/รายละเอียดสั้นๆ"></textarea>
-            </div>
-
-            <div class="form-actions">
-              <button id="saveBtn" class="btn-candy big shimmer">💾 บันทึก</button>
-              <button id="resetBtn" class="outline">รีเซ็ตฟอร์ม</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card pop shine">
-          <div class="card-head">
-            <h2>ประวัติรายการ <span class="sub">แก้ไขได้ทันทีจากตารางด้านล่าง 🎀</span></h2>
-          </div>
+        <div class="card">
+          <h2>2) Review & save</h2>
           <div class="content">
-            <div id="empty" class="muted">ยังไม่มีรายการ ลองเพิ่มรายการแรกกันเถอะ ✨</div>
-            <div class="table-wrap aurora">
+            <div class="rowgap">
+              <div>
+                <div class="muted" style="margin-bottom:.25rem">Type</div>
+                <div class="actions" style="justify-content:flex-start">
+                  <button id="typeIncome" class="outline">Income</button>
+                  <button id="typeExpense">Expense</button>
+                </div>
+              </div>
+
+              <div>
+                <div class="muted" style="margin-bottom:.25rem">Amount (THB)</div>
+                <input id="amount" type="number" min="0" step="0.01" />
+              </div>
+
+              <div>
+                <div class="muted" style="margin-bottom:.25rem">Category</div>
+                <select id="category">
+                  <option value="">Choose category</option>
+                  <option>Shopping</option>
+                  <option>Pay Bill</option>
+                  <option>Food</option>
+                  <option>Transport</option>
+                  <option>Groceries</option>
+                  <option>Health</option>
+                  <option>Entertainment</option>
+                  <option>Education</option>
+                  <option>Salary</option>
+                  <option>Transfer</option>
+                  <option>Other</option>
+                </select>
+              </div>
+
+              <div>
+                <div class="muted" style="margin-bottom:.25rem">Date & time</div>
+                <input id="datetime" type="datetime-local" />
+              </div>
+
+              <div>
+                <div class="muted" style="margin-bottom:.25rem">Note</div>
+                <textarea id="note" rows="3" placeholder="Optional notes from the slip, merchant, etc."></textarea>
+              </div>
+
+              <div class="actions" style="justify-content:flex-start">
+                <button id="saveBtn">Save entry</button>
+                <button id="resetBtn" class="outline">Reset form</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>History</h2>
+          <div class="content">
+            <div id="empty" class="muted">No entries yet.</div>
+            <div style="overflow:auto">
               <table id="table" style="display:none">
                 <thead>
                   <tr>
-                    <th>เมื่อไหร่</th>
-                    <th>ประเภท</th>
-                    <th>หมวดหมู่</th>
-                    <th>จำนวน</th>
-                    <th>โน้ต</th>
+                    <th>When</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Note</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -136,38 +116,49 @@
       </section>
 
       <aside class="rightpanel">
-        <div class="card sticky pop shine">
-          <div class="card-head">
-            <h2>สรุปผล <span class="sub">ภาพรวมค่าใช้จ่ายแบบหวานๆ 🍬</span></h2>
-          </div>
+        <div class="card" style="height:100%">
+          <h2>Summary</h2>
           <div class="content">
-            <div class="stats cute">
+            <div class="stats" style="margin-bottom:.75rem">
               <div class="stat">
-                <div class="stat-ico">🌈</div>
-                <div class="stat-title">Income</div>
-                <div id="sumIncome" class="stat-num"></div>
+                <div class="muted">Income</div>
+                <div id="sumIncome" style="font-weight:700"></div>
               </div>
               <div class="stat">
-                <div class="stat-ico">🍓</div>
-                <div class="stat-title">Expense</div>
-                <div id="sumExpense" class="stat-num"></div>
+                <div class="muted">Expense</div>
+                <div id="sumExpense" style="font-weight:700"></div>
               </div>
               <div class="stat">
-                <div class="stat-ico">⭐</div>
-                <div class="stat-title">Balance</div>
-                <div id="sumBalance" class="stat-num"></div>
+                <div class="muted">Balance</div>
+                <div id="sumBalance" style="font-weight:700"></div>
               </div>
             </div>
-
-            <div class="chart-card">
-              <canvas id="pie"></canvas>
-              <div id="chartEmpty" class="muted center">เพิ่มค่าใช้จ่ายเพื่อดูกราฟวงกลมสุดคิ้วท์ 💞</div>
-            </div>
+            <canvas id="pie" width="320" height="240" style="width:100%;height:100%"></canvas>
+            <div id="chartEmpty" class="muted">Add some expenses to see the chart.</div>
           </div>
         </div>
       </aside>
     </div>
   </main>
+
+  <div class="bottompanel">
+    <div class="container">
+      <div class="stats">
+        <div class="stat">
+          <div class="muted">Income</div>
+          <div id="mIncome" style="font-weight:700"></div>
+        </div>
+        <div class="stat">
+          <div class="muted">Expense</div>
+          <div id="mExpense" style="font-weight:700"></div>
+        </div>
+        <div class="stat">
+          <div class="muted">Balance</div>
+          <div id="mBalance" style="font-weight:700"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="./scripts/config.js"></script>
   <script src="./scripts/api.js"></script>

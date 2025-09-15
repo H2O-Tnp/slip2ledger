@@ -1,7 +1,7 @@
 import express from "express";
 const router = express.Router();
 
-router.post("/extract", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { mime, dataBase64 } = req.body || {};
     const debug = String(req.query.debug || "0") === "1";
@@ -12,7 +12,7 @@ router.post("/extract", async (req, res) => {
     if (!apiKey)
       return res.status(500).json({ error: "Server missing GOOGLE_API_KEY" });
 
-    const MODEL = "gemini-1.5-flash";
+    const MODEL = "gemini-2.0-flash";
     const prompt = [
       "You are a receipt/slip parser for Thai/English payment slips.",
       "Return STRICT JSON ONLY with keys:",
@@ -51,7 +51,16 @@ router.post("/extract", async (req, res) => {
     );
     if (!resp.ok) {
       const t = await resp.text();
-      return res.status(502).json({ error: "Gemini error", detail: t });
+      let payload = t;
+      try { payload = JSON.parse(t); } catch {}
+      // common cases to help you debug quickly
+      const code = payload?.error?.code;
+      const message = payload?.error?.message || payload?.message || String(t).slice(0, 800);
+      return res.status(502).json({
+        error: "Gemini error",
+        code,
+        detail: message
+      });
     }
 
     const data = await resp.json();
@@ -190,153 +199,95 @@ function isoToLocalNoTZ(iso) {
   )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-function extractDateTimeFromText(text) {
-  const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
+// --- replace the whole function in backend/routes/ai.js ---
+function extractDateTimeFromText(text){
+  const lines = (text || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const blob = lines.join(" ␤ ");
+
   const thMonths = {
-    "ม.ค.": 1,
-    "ก.พ.": 2,
-    "มี.ค.": 3,
-    "เม.ย.": 4,
-    "พ.ค.": 5,
-    "มิ.ย.": 6,
-    "ก.ค.": 7,
-    "ส.ค.": 8,
-    "ก.ย.": 9,
-    "ต.ค.": 10,
-    "พ.ย.": 11,
-    "ธ.ค.": 12,
-    มกราคม: 1,
-    กุมภาพันธ์: 2,
-    มีนาคม: 3,
-    เมษายน: 4,
-    พฤษภาคม: 5,
-    มิถุนายน: 6,
-    กรกฎาคม: 7,
-    สิงหาคม: 8,
-    กันยายน: 9,
-    ตุลาคม: 10,
-    พฤศจิกายน: 11,
-    ธันวาคม: 12,
+    "ม.ค.":1,"ก.พ.":2,"มี.ค.":3,"เม.ย.":4,"พ.ค.":5,"มิ.ย.":6,"ก.ค.":7,"ส.ค.":8,"ก.ย.":9,"ต.ค.":10,"พ.ย.":11,"ธ.ค.":12,
+    "มกราคม":1,"กุมภาพันธ์":2,"มีนาคม":3,"เมษายน":4,"พฤษภาคม":5,"มิถุนายน":6,"กรกฎาคม":7,"สิงหาคม":8,"กันยายน":9,"ตุลาคม":10,"พ नवंबर":11,"ธันวาคม":12
   };
-  const enMonths = {
-    jan: 1,
-    feb: 2,
-    mar: 3,
-    apr: 4,
-    may: 5,
-    jun: 6,
-    jul: 7,
-    aug: 8,
-    sep: 9,
-    sept: 9,
-    oct: 10,
-    nov: 11,
-    dec: 12,
-  };
+  const enMonths = { jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,sept:9,oct:10,nov:11,dec:12 };
+
+  // Ensure /g flag helper
+  const withG = (re) => new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
+
   const timePatterns = [
     /\b([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?\s*(am|pm)?\b/i,
-    /\b([01]?\d|2[0-3])[.:]([0-5]\d)(?:[:.]([0-5]\d))?\s*(น\.|นาฬิกา)?\b/,
+    /\b([01]?\d|2[0-3])[.:]([0-5]\d)(?:[:.]([0-5]\d))?\s*(น\.|นาฬิกา)?\b/
   ];
   const datePatterns = [
-    /\b(20\d{2}|19\d{2})[-/.](0?[1-9]|1[0-2])[-/.](0?[1-9]|[12]\d|3[01])\b/,
-    /\b(0?[1-9]|[12]\d|3[01])[-/.](0?[1-9]|1[0-2])[-/.](\d{2,4})\b/,
-    /\b(0?[1-9]|[12]\d|3[01])\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)\s+(20\d{2}|19\d{2})\b/i,
-    /\b(0?[1-9]|[12]\d|3[01])\s+(ม\.ค\.|ก\.พ\.|มี\.ค\.|เม\.ย\.|พ\.ค\.|มิ\.ย\.|ก\.ค\.|ส\.ค\.|ก\.ย\.|ต\.ค\.|พ\.ย\.|ธ\.ค\.|มกราคม|กุมภาพันธ์|มีนาคม|เมษายน|พฤษภาคม|มิถุนายน|กรกฎาคม|สิงหาคม|กันยายน|ตุลาคม|พฤศจิกายน|ธันวาคม)\s+(25\d{2}|20\d{2}|19\d{2})\b/,
+    /\b(20\d{2}|19\d{2})[-/.](0?[1-9]|1[0-2])[-/.](0?[1-9]|[12]\d|3[01])\b/,                                   // YYYY-MM-DD
+    /\b(0?[1-9]|[12]\d|3[01])[-/.](0?[1-9]|1[0-2])[-/.](\d{2,4})\b/,                                           // DD-MM-YY/YY
+    /\b(0?[1-9]|[12]\d|3[01])\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)\s+(20\d{2}|19\d{2})\b/i, // 13 Sep 2025
+    /\b(0?[1-9]|[12]\d|3[01])\s+(ม\.ค\.|ก\.พ\.|มี\.ค\.|เม\.ย\.|พ\.ค\.|มิ\.ย\.|ก\.ค\.|ส\.ค\.|ก\.ย\.|ต\.ค\.|พ\.ย\.|ธ\.ค\.|มกราคม|กุมภาพันธ์|มีนาคม|เมษายน|พฤษภาคม|มิถุนายน|กรกฎาคม|สิงหาคม|กันยายน|ตุลาคม|พฤศจิกายน|ธันวาคม)\s+(25\d{2}|20\d{2}|19\d{2})\b/
   ];
 
+  // ---- time parsing ----
   const timeHits = [];
-  for (const re of timePatterns)
-    for (const m of blob.matchAll(re)) timeHits.push(m);
+  for (const re of timePatterns) {
+    const g = withG(re);
+    let m;
+    while ((m = g.exec(blob))) timeHits.push(m);
+  }
   const time = timeHits[0];
   const t = {
     raw: time?.[0] || "",
     h: parseInt(time?.[1] || "12", 10) || 12,
     mi: parseInt(time?.[2] || "0", 10) || 0,
     s: parseInt(time?.[3] || "0", 10) || 0,
-    ampm: (time?.[4] || "").toLowerCase(),
+    ampm: (time?.[4] || "").toLowerCase()
   };
   if (t.ampm === "pm" && t.h < 12) t.h += 12;
   if (t.ampm === "am" && t.h === 12) t.h = 0;
 
+  // ---- date parsing ----
   const rawDates = [];
-  for (const re of datePatterns)
-    for (const m of blob.matchAll(re)) rawDates.push({ re, m, raw: m[0] });
+  for (const re of datePatterns) {
+    const g = withG(re);
+    let m;
+    while ((m = g.exec(blob))) rawDates.push({ re, m, raw: m[0] });
+  }
+
   const now = Date.now();
   const candidates = [];
   for (const { re, m, raw } of rawDates) {
-    let y,
-      mo,
-      d,
-      beAdjusted = false;
-    if (re === datePatterns[0]) {
-      y = +m[1];
-      mo = +m[2];
-      d = +m[3];
-    } else if (re === datePatterns[1]) {
-      d = +m[1];
-      mo = +m[2];
-      y = +m[3];
+    let y, mo, d, beAdjusted = false;
+    if (re === datePatterns[0]) { // YYYY-MM-DD
+      y = +m[1]; mo = +m[2]; d = +m[3];
+    } else if (re === datePatterns[1]) { // DD-MM-YY/YY(YY)
+      d = +m[1]; mo = +m[2]; y = +m[3];
       if (y < 100) y += y >= 70 ? 1900 : 2000;
-      if (y >= 2500) {
-        y -= 543;
-        beAdjusted = true;
-      }
-    } else if (re === datePatterns[2]) {
-      d = +m[1];
-      mo = enMonths[m[2].toLowerCase()] || 0;
-      y = +m[3];
-    } else {
-      d = +m[1];
-      const monWord = m[2];
-      mo = thMonths[monWord] || thMonths[monWord] || 0;
-      y = +m[3];
-      if (y >= 2500) {
-        y -= 543;
-        beAdjusted = true;
-      }
+      if (y >= 2500) { y -= 543; beAdjusted = true; } // Buddhist year
+    } else if (re === datePatterns[2]) { // 13 Sep 2025
+      d = +m[1]; mo = enMonths[m[2].toLowerCase()] || 0; y = +m[3];
+    } else { // Thai month words
+      d = +m[1]; const monWord = m[2]; mo = thMonths[monWord] || 0; y = +m[3];
+      if (y >= 2500) { y -= 543; beAdjusted = true; }
     }
-    if (
-      !(y >= 1900 && y <= 2100) ||
-      !(mo >= 1 && mo <= 12) ||
-      !(d >= 1 && d <= 31)
-    )
-      continue;
+    if (!(y>=1900 && y<=2100) || !(mo>=1 && mo<=12) || !(d>=1 && d<=31)) continue;
+
     const dtLocal = new Date(y, mo - 1, d, t.h, t.mi, t.s);
     const scoreDays = Math.abs(dtLocal.getTime() - now) / 86400000;
-    const dtUtc = new Date(Date.UTC(y, mo - 1, d, t.h - 7, t.mi, t.s)); // Bangkok UTC+7
-    candidates.push({
-      y,
-      mo,
-      d,
-      h: t.h,
-      mi: t.mi,
-      s: t.s,
-      rawDate: raw,
-      rawTime: t.raw,
-      beAdjusted,
-      dtLocal,
-      dtUtc,
-      scoreDays,
-    });
+    // Assume Bangkok (UTC+7) for UTC representation
+    const dtUtc = new Date(Date.UTC(y, mo - 1, d, t.h - 7, t.mi, t.s));
+    candidates.push({ y, mo, d, h: t.h, mi: t.mi, s: t.s, rawDate: raw, rawTime: t.raw, beAdjusted, dtLocal, dtUtc, scoreDays });
   }
-  candidates.sort((a, b) => a.scoreDays - b.scoreDays || b.y - a.y);
+
+  candidates.sort((a,b) => (a.scoreDays - b.scoreDays) || (b.y - a.y));
   const chosen = candidates[0];
+
   if (!chosen) {
     const nowD = new Date();
     return {
       datetimeLocal: toLocalNoTZ(nowD),
       datetimeUTC: nowD.toISOString(),
-      foundDateText: "",
-      foundTimeText: "",
-      beYearAdjusted: false,
-      pickedStrategy: "fallback(now)",
-      candidates: [],
+      foundDateText: "", foundTimeText: "",
+      beYearAdjusted: false, pickedStrategy: "fallback(now)", candidates: []
     };
   }
+
   return {
     datetimeLocal: toLocalNoTZ(chosen.dtLocal),
     datetimeUTC: chosen.dtUtc.toISOString(),
@@ -344,21 +295,20 @@ function extractDateTimeFromText(text) {
     foundTimeText: chosen.rawTime,
     beYearAdjusted: chosen.beAdjusted,
     pickedStrategy: "closest-to-today",
-    candidates: candidates
-      .slice(0, 5)
-      .map((c) => ({
-        date: toLocalNoTZ(c.dtLocal),
-        scoreDays: c.scoreDays,
-        beAdjusted: c.beAdjusted,
-        rawDate: c.rawDate,
-      })),
+    candidates: candidates.slice(0,5).map(c => ({ date: toLocalNoTZ(c.dtLocal), scoreDays: c.scoreDays, beAdjusted: c.beAdjusted, rawDate: c.rawDate }))
   };
 }
-function toLocalNoTZ(d) {
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-    d.getHours()
-  )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+
+function toLocalNoTZ(d){
+  const pad = n => String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
+
+// function toLocalNoTZ(d) {
+//   const pad = (n) => String(n).padStart(2, "0");
+//   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+//     d.getHours()
+//   )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+// }
 
 export default router;
