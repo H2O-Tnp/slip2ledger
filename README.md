@@ -16,7 +16,7 @@ Then open http://localhost:3221/
 ## Features
 - SPA, responsive (desktop side summary, mobile bottom summary)
 - CRUD: create/read/update/delete entries
-- LLM: backend /ai/extract (Gemini 1.5 Flash) parses slip image to fields
+- LLM: backend /ai/extract (Gemini 2.0 Flash) parses slip image to fields
 - No frontend JS libraries or CDNs; only standard Web APIs
 - Backend uses only Express/Mongoose/cors/dotenv as required
 

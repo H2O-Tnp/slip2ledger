@@ -130,7 +130,9 @@ function drawPie(canvas, data) {
   }
 
   // legend mode for narrow / crowded
-  const small = width <= 420 || segments.length > 6;
+  // const small = width <= 420 || segments.length > 6;
+  const small = width <= 340 || segments.length > 10;
+
   const cx = width / 2;
   let cy = height / 2;
   let r = Math.min(width, height) / (small ? 2.6 : 2.2);
