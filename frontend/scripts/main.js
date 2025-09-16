@@ -139,7 +139,13 @@ async function refreshEntries() {
     state.items = [];
   }
   state.items.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
-  render();
+  // prevent render errors from breaking save flow
+  try {
+    render();
+  } catch (e) {
+    console.error("render error:", e);
+    window.uiHelpers?.showToast?.("Render failed (see console)", "warn");
+  }
 }
 
 function setFile(f) {
@@ -257,9 +263,10 @@ function render() {
   sumIncome.textContent = currencyTHB(income);
   sumExpense.textContent = currencyTHB(expense);
   sumBalance.textContent = currencyTHB(balance);
-  mIncome.textContent = sumIncome.textContent;
-  mExpense.textContent = sumExpense.textContent;
-  mBalance.textContent = sumBalance.textContent;
+  // guard mobile summary elements (not present in the new layout)
+  if (mIncome) mIncome.textContent = sumIncome.textContent;
+  if (mExpense) mExpense.textContent = sumExpense.textContent;
+  if (mBalance) mBalance.textContent = sumBalance.textContent;
   // Pie data
   const catMap = new Map();
   for (const it of items.filter((x) => x.type === "expense")) {
