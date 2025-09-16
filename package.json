@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node backend/server.js"
+    "dev": "node backend/server.js",
+    "start": "node backend/server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

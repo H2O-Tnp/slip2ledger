@@ -290,7 +290,7 @@ tbody td:last-child { text-align: right; }
 /* ===== Summary stats ===== */
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(1, 1fr);
   gap: 10px;
 }
 .stat {
@@ -315,4 +315,43 @@ tbody td:last-child { text-align: right; }
   button { padding: 9px 11px; }
   .dropzone { min-height: 160px; }
   #preview { max-height: 220px; }
+}
+
+/* ===== Scrollbar (WebKit) ===== */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--muted) 40%, transparent);
+  border-radius: 8px; border: 2px solid transparent; background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: color-mix(in oklab, var(--muted) 65%, transparent); }
+
+
+/* ===== File input (native 'Choose File') ===== */
+input[type="file"] {
+  padding: 8px; /* re-affirm for consistency with other inputs */
+  cursor: pointer;
+}
+input[type="file"]::-webkit-file-upload-button {
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 1px solid var(--btn-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background .2s ease, transform .1s ease;
+}
+input[type="file"]::-webkit-file-upload-button:hover { background: var(--btn-hover); }
+input[type="file"]::-webkit-file-upload-button:active { transform: translateY(1px); }
+
+#pie {
+  display: block;
+  width: 100%;
+  min-height: 280px;  /* ensures enough vertical space */
+  height: 100%;       /* let JS manage scaling */
+  aspect-ratio: 1 / 1; /* keep circle shape */
+  background: linear-gradient(180deg, color-mix(in oklab, var(--card-2) 80%, transparent), transparent);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }

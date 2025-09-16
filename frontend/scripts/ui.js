@@ -129,24 +129,21 @@ function drawPie(canvas, data) {
     segments = top;
   }
 
-  // legend mode for narrow / crowded
-  const small = width <= 420 || segments.length > 6;
+
   const cx = width / 2;
   let cy = height / 2;
-  let r = Math.min(width, height) / (small ? 2.6 : 2.2);
+  let r = Math.min(width, height) / 3.0;
 
-  if (small) {
-    const rows = Math.ceil(segments.length / (width >= 340 ? 2 : 1));
-    const legendHeight = 24 + rows * 22 + 8;
-    const needed = Math.max(220, (r*2 + 24 + legendHeight));
-    if (needed > height + 1) {
-      canvas.style.height = Math.ceil(needed) + "px";
-      ctx = prepareCanvas(canvas);
-      width = canvas.clientWidth; height = canvas.clientHeight;
-      r = Math.min(width, height) / 2.6;
-    }
-    cy = Math.min(height * 0.42, (height - legendHeight) * 0.5);
+  const rows = Math.ceil(segments.length / (width >= 340 ? 2 : 1));
+  const legendHeight = 24 + rows * 22 + 8;
+  const needed = Math.max(220, (r*2 + 24 + legendHeight));
+  if (needed > height + 1) {
+    canvas.style.height = Math.ceil(needed) + "px";
+    ctx = prepareCanvas(canvas);
+    width = canvas.clientWidth; height = canvas.clientHeight;
+    r = Math.min(width, height) / 3.0;
   }
+  cy = Math.min(height * 0.42, (height - legendHeight) * 0.5);
 
   // angles
   let start = -Math.PI / 2;
@@ -163,102 +160,28 @@ function drawPie(canvas, data) {
     ctx.fillStyle = a.color; ctx.fill();
   });
 
-  if (small) {
-    // legend rows below
-    const pct = (v)=> Math.round((v/total)*100) + '%';
-    const colCount = width >= 340 ? 2 : 1;
-    const colW = (width - 32) / colCount;
-    const legendTop = cy + r + 24;
 
-    ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto';
-    ctx.textBaseline = 'middle'; ctx.fillStyle = labelFg;
+  // legend rows below
+  const pct = (v)=> Math.round((v/total)*100) + '%';
+  const colCount = width >= 340 ? 2 : 1;
+  const colW = (width - 32) / colCount;
+  const legendTop = cy + r + 24;
 
-    segments.forEach((s, idx) => {
-      const col = idx % colCount;
-      const row = Math.floor(idx / colCount);
-      const x = 16 + col * colW;
-      const y = legendTop + row * 22;
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto';
+  ctx.textBaseline = 'middle'; ctx.fillStyle = labelFg;
 
-      ctx.fillStyle = arcs[idx].color;
-      ctx.fillRect(x, y - 6, 12, 12);
-      ctx.fillStyle = labelFg;
-      ctx.fillText(`${s.name} ${pct(s.value)}`, x + 16, y);
-    });
-    return;
-  }
+  segments.forEach((s, idx) => {
+    const col = idx % colCount;
+    const row = Math.floor(idx / colCount);
+    const x = 16 + col * colW;
+    const y = legendTop + row * 22;
 
-  // outside labels + curved leaders (desktop/tablet)
-  const rightLabels = [], leftLabels = [];
-  arcs.forEach(a => {
-    const rightSide = Math.cos(a.mid) >= 0;
-    const baseY = cy + Math.sin(a.mid) * (r + 10);
-    const pct = Math.round((a.seg.value / total) * 100);
-    const label = `${a.seg.name} ${pct}%`;
-    (rightSide ? rightLabels : leftLabels).push({
-      side: rightSide ? 'r' : 'l',
-      mid: a.mid,
-      y: baseY,
-      color: a.color,
-      label
-    });
+    ctx.fillStyle = arcs[idx].color;
+    ctx.fillRect(x, y - 6, 12, 12);
+    ctx.fillStyle = labelFg;
+    ctx.fillText(`${s.name} ${pct(s.value)}`, x + 16, y);
   });
-  rightLabels.sort((a,b)=>a.y-b.y);
-  leftLabels.sort((a,b)=>a.y-b.y);
-
-  const placeColumn = (list, side) => {
-    let lastY = -Infinity;
-    list.forEach(item => {
-      if (item.y - lastY < MIN_LABEL_SPACING) item.y = lastY + MIN_LABEL_SPACING;
-      lastY = item.y;
-
-      const mid = item.mid;
-      const aOuterX = cx + Math.cos(mid) * (r + 4);
-      const aOuterY = cy + Math.sin(mid) * (r + 4);
-      const elbowX = cx + Math.cos(mid) * (r + 20);
-      const elbowY = cy + Math.sin(mid) * (r + 20);
-      const labelX = side === 'r' ? cx + r + 72 : cx - r - 72;
-      const labelY = item.y;
-
-      // curved leader
-      ctx.strokeStyle = lineColor;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(aOuterX, aOuterY);
-      ctx.quadraticCurveTo(elbowX, elbowY, labelX + (side==='r'? -16 : 16), labelY);
-      ctx.stroke();
-
-      // arrowhead at slice
-      const arrowLen = 10;
-      const theta = Math.atan2(aOuterY - elbowY, aOuterX - elbowX);
-      const tipX = aOuterX, tipY = aOuterY;
-      const leftX = tipX - arrowLen * Math.cos(theta - Math.PI/8);
-      const leftY = tipY - arrowLen * Math.sin(theta - Math.PI/8);
-      const rightX = tipX - arrowLen * Math.cos(theta + Math.PI/8);
-      const rightY = tipY - arrowLen * Math.sin(theta + Math.PI/8);
-      ctx.fillStyle = lineColor;
-      ctx.beginPath();
-      ctx.moveTo(tipX, tipY);
-      ctx.lineTo(leftX, leftY);
-      ctx.lineTo(rightX, rightY);
-      ctx.closePath();
-      ctx.fill();
-
-      // label pill
-      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto';
-      ctx.textAlign = side === 'r' ? 'left' : 'right';
-      ctx.textBaseline = 'middle';
-      const textW = ctx.measureText(item.label).width;
-      const padX = 8, boxH = 22, radius = 10;
-      const boxW = textW + padX*2;
-      const boxX = side === 'r' ? (labelX - 4) : (labelX - boxW + 4);
-      const boxY = labelY - boxH/2;
-      roundRect(ctx, boxX, boxY, boxW, boxH, radius, labelBg, lineColor);
-      ctx.fillStyle = labelFg;
-      ctx.fillText(item.label, boxX + (side==='r'? padX : boxW - padX), labelY);
-    });
-  };
-  placeColumn(rightLabels, 'r');
-  placeColumn(leftLabels, 'l');
+  return;
 }
 
 /* helper for rounded pill labels */
